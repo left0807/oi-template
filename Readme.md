@@ -17,3 +17,7 @@
 ### DP ###
 1. Matrix optimization
 2. Convex hull Trick
+
+## Credit ## 
+- [sqrteipi](https://github.com/sqrteipi) : pbds, merge sort
+- [left0807](https://github.com/left0807) : modular inverse
