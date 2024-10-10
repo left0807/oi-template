@@ -1,52 +1,50 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-const int N = 300001;
-vector<int>adj[N], ans(N), p(N), sz(N), w(N);
+const int N = 1e6+1;
+set<int>adj[N];
+vector<int>sub(N), fa(N);
 
-void dfs(int u){
-    sz[u] = 1;
-    ans[u] = u;
+int dfs(int u, int p){
+    sub[u] = 1;
     for(int v : adj[u]){
-        dfs(v);
-        sz[u] += sz[v]; // subtree u size 
-        w[u] = max(w[u], w[v]); // max child subtree 
+        if(v==p)continue;
+        sub[u] += dfs(v,u);
     }
+    return sub[u];
+}
 
+int centroid(int u, int p, int sz){
     for(int v : adj[u]){
-        int x = ans[v];
-        while(x != u){
-            /*
-                Tree = subtree of u 
-                total size = sz[u]
-                max subtree size at x = max(w[x], sz[u]-sz[x])    
-            */
-            if(max(w[x], sz[u]-sz[x]) <= sz[u]/2){
-                ans[u] = x;
-                break;
-            }else x = p[x];
-        }
+        if(v==p)continue;
+        if(sub[v] > sz/2)return centroid(v,u,sz);
+    }
+    return u;
+}
+
+void build(int u, int p){
+    int sz = dfs(u, p); // size of subtree
+    int c = centroid(u,p,sz); // centroid of subtree
+    if(p==-1) p = c;
+    fa[c] = p; // root of centroid
+
+    for(int v : adj[c]){ // split
+        adj[c].erase(v); 
+        adj[v].erase(c);
+        build(v,c); 
     }
 }
 
 int main(){
-    ios::sync_with_stdio(0);
-    cin.tie(0);
+    int n;
+    cin >> n;
 
-    int n, q;
-    cin >> n >> q;
-
-    for(int i=2; i<=n; i++){
-        cin >> p[i];
-        adj[p[i]].push_back(i);
+    for(int i=0; i<n-1; i++){
+        int u, v;
+        cin >> u >> v;
+        adj[u].insert(v);
+        adj[v].insert(u);
     }
 
-    dfs(1);
-    while(q--){
-        int u;
-        cin >> u;
-        cout << ans[u] << "\n";
-    }
+    build(1,-1);
 }
-
-// finding centroid for every subtree
