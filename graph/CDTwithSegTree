@@ -1,0 +1,181 @@
+/*
+
+!!!!!!!!!!!!!!!!!
+Warning : Not optimized , big time constant!!!
+!!!!!!!!!!!!!!!!!
+*/
+#include <bits/stdc++.h>
+#pragma comment(linker, "/stack:200000000")
+#pragma GCC target("sse,sse2,sse3,ssse3,sse4,popcnt,abm,mmx,avx,tune=native")
+#pragma G++ optimize(2)
+#pragma G++ optimize(3)
+
+using namespace std;
+
+typedef long long ll;
+typedef pair<ll, ll> pii;
+
+const ll N = 100010;
+const ll N2 = 6000010;
+const ll LG = 23;
+
+vector<ll>sub(N), fa(N), val(N), dep2(N);
+vector<bool>vis(N,0); 
+vector<pii>adj[N];
+
+// Build centroid decomposition tree
+ll dfs(ll u, ll p){
+    sub[u] = 1;
+    for(auto [v,w] : adj[u]){
+        if(v==p || vis[v])continue;
+        sub[u] += dfs(v,u);
+    }
+    return sub[u];
+}
+
+ll centroid(ll u, ll p, ll sz){
+    for(auto [v,w] : adj[u]){
+        if(v==p || vis[v])continue;
+        if(sub[v] > sz/2)return centroid(v,u,sz);
+    }
+    return u;
+}
+
+ll build(ll u, ll p){
+    ll sz = dfs(u, p); // size of subtree
+    ll c = centroid(u,p,sz); // centroid of subtree
+    fa[c] = p;
+    vis[c] = 1;
+    dep2[c] = dep2[p]+1;
+    for(auto [v,w] : adj[c]){ // split
+        if(vis[v])continue;
+        build(v,c); 
+    }
+    return c;
+}
+
+// LCA
+ll anc[N][LG], dep[N];
+void precompute(ll u, ll p){
+    anc[u][0] = p;
+    dep[u] = dep[p]+1;
+    for(ll i=1; i<LG; i++)anc[u][i] = anc[anc[u][i-1]][i-1];
+    for(auto [v,w] : adj[u]){
+        if(v==p)continue;
+        precompute(v,u);
+    }
+}
+
+ll lca(ll u, ll v){
+    if(dep[u] < dep[v])swap(u,v);
+    for(ll i=LG-1; i>=0; i--)if(dep[anc[u][i]] >= dep[v])u = anc[u][i];
+    if(u==v)return u;
+    for(ll i=LG-1; i>=0; i--){
+        if(anc[u][i] != anc[v][i]){
+            u = anc[u][i];
+            v = anc[v][i]; 
+        }
+    }
+    return anc[u][0];
+}
+
+
+
+ll dis(ll u, ll v){
+    ll w = lca(u,v);
+    return dep[u]+dep[v]-2*dep[w];
+}
+
+
+int d2[N][LG];
+
+ll dis2(ll u, ll v){
+    return d2[u][dep2[u]-dep2[v]];
+    // return dis(u,v);
+}
+
+// segTree
+struct segTree{
+    ll cnt, rt[N], sum[N2], lc[N2], rc[N2];
+    void update(ll& v, ll l, ll r, ll idx, ll val){
+        if(!v)v = ++cnt;
+        if(l==r){
+            sum[v] += val;
+            return ;
+        }
+        ll m = (l+r)/2;
+        if(idx <= m)update(lc[v], l, m, idx, val);
+        else update(rc[v], m+1, r, idx, val);
+        sum[v] = sum[lc[v]] + sum[rc[v]];
+    }
+    ll query(ll v, ll l, ll r, ll ql, ll qr){
+        if(!v || ql > r || qr < l)return 0;
+        if(ql <= l && r <= qr)return sum[v];
+        ll m = (l+r)/2;
+        return query(lc[v],l,m,ql,qr) + query(rc[v],m+1,r,ql,qr);
+    }
+} S1, S2; 
+
+/*
+S1 = subtree[x] distance 
+S2 = subtree[fa[x]] distance 
+*/
+
+void upd(ll u, ll y, ll n, bool t){
+    S1.update(S1.rt[u],0,n,0,y-val[u]);
+    ll v = u;
+    while(fa[v]){
+        ll d = dis2(u,fa[v]);
+        S1.update(S1.rt[fa[v]],0,n,d,y-val[u]);
+        S2.update(S2.rt[v],0,n,d,y-val[u]);
+        v = fa[v];
+    }
+    if(t)val[u] = y;
+}
+
+ll qry(ll u, ll k, ll n){
+    ll v = u;
+    ll res = S1.query(S1.rt[u],0,n,0,k);
+    while(fa[v]){
+        ll d = dis2(u,fa[v]);
+        if(k >= d){
+            res += S1.query(S1.rt[fa[v]],0,n,0,k-d);
+            res -= S2.query(S2.rt[v],0,n,0,k-d);
+        }
+        v = fa[v];
+    }
+    return res;
+}
+
+int main(){
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    ll n, m;
+    cin >> n >> m;
+
+    for(ll i=1; i<=n; i++)cin >> val[i];
+
+    for(ll i=1; i<n; i++){
+        ll u, v;
+        cin >> u >> v;
+        adj[u].push_back({v,1});
+        adj[v].push_back({u,1});
+    }
+    precompute(1,0);
+    build(1,0);
+    for(int i=1; i<=n; i++)for(int j=i; j; j=fa[j])d2[i][dep2[i]-dep2[j]] = dis(i,j);
+    for(ll i=1; i<=n; i++)upd(i,2*val[i],n,0);
+    ll last = 0;
+    for(ll i=1; i<=m; i++){
+        ll t, a, b;
+        cin >> t >> a >> b;
+        a ^= last;
+        b ^= last;
+        if(t){
+            upd(a,b,n,1);
+        }else{
+            last = qry(a,b,n);
+            cout << last << "\n";
+        }
+    }
+}
