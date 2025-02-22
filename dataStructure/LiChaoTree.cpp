@@ -1,77 +1,111 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-// abc289 G
-
 typedef long long ll;
 
-struct LCT{
-    static const int N = 2e5+5, M = N*30, inf = 1e9;
-    int rt = 1;
-    struct line{ 
-        ll k, b;
-        line (ll kk=0, ll bb=0){
-            k = kk, b = bb;
-        }
-        ll f(ll x){
-            return x*k+b;
-        }
-    };
+struct lctree{
+    const double EPS = 1e-8;
+    static const int N = 1e5+10; // no.of line
+    int tot = 0;
+    int rt = 0;
+    int cnt = 0;
+    int L = 0, R = 4e4+5; // bound of x 
 
-    ll inter(line aa, line bb){ // x-coor of intersection of 2 line
-        return (bb.b-aa.b)/(aa.k-bb.k);
+    struct line{    
+        double a, b;
+    }li[N];
+
+    struct node{
+        int l, r;
+        int id;
+    }seg[N<<6];
+
+    double f(int id, int x){
+        return li[id].a*x + li[id].b;
     }
 
-    int tot = 0, ch[M][2];
-    line seg[M];
+    bool fcmp(double a){
+        return fabs(a) <= EPS ? 0 : a < 0 ? -1 : 1;
+    }
 
-    void add(int &v, int l, int r, line now){
-        if(!v){
-            v = ++tot;
-            seg[v] = now;
-            return ;
-        }
-        int m = (l+r)/2;
-        ll la = seg[v].f(l), ra = seg[v].f(r), lb = now.f(l), rb = now.f(r);
-        if(la <= lb && ra <= rb)return ;
-        if(la >= lb && ra >= rb){
-            seg[v] = now;
-            return ;
-        }
+    bool cmp(int id1, int id2, int x){ // 1 = id2 better (larger x/smaller id) 
+        double f1 = f(id1,x), f2 = f(id2,x);
+        return fcmp(f1-f2) ? f1 < f2 : id1 > id2;
+    }
 
-        ll it = inter(seg[v], now);
-        if(la <= lb){
-            if(it <= m){
-                add(ch[v][0], l, m, seg[v]); // push old line as new line is stored
-                seg[v] = now;
-            }else add(ch[v][1], m+1, r, now);
-        }else{
-            if(it <= m)add(ch[v][0], l, m, now);
-            else{
-                add(ch[v][1], m+1, r, seg[v]);
-                seg[v] = now;
+    void add(int &v, int l, int r, int ql, int qr, int id){
+        if(!v)v = ++tot;
+        if(ql <= l && r <= qr){
+            if(cmp(id, seg[v].id, l) && cmp(id, seg[v].id, r))return ;
+            if(cmp(seg[v].id, id, l) && cmp(seg[v].id, id, r)){
+                seg[v].id = id;
+                return ;
             }
+            int m = (l+r)/2;
+            if(cmp(seg[v].id, id, m))swap(seg[v].id, id);
+            if(cmp(seg[v].id, id, l))add(seg[v].l, l, m, ql, qr, id);
+            if(cmp(seg[v].id, id, r))add(seg[v].r, m+1, r, ql, qr, id);
+        }else{
+            int m = (l+r)/2;
+            if(ql<=m)add(seg[v].l, l, m, ql, qr, id);
+            if(qr>m)add(seg[v].r, m+1, r, ql, qr, id);
         }
-    }    
+    }
 
-    ll qry(int v, int l, int r, int x){
-        if(!v)return (ll)inf*inf;
-        int m = (l+r)/2;
-        if(x <= m)return min(seg[v].f(x), qry(ch[v][0], l, m, x));
-        else return min(seg[v].f(x), qry(ch[v][1],m+1,r,x));
+    int qry(int v, int l, int r, int x){
+        if(l == x && x == r)return seg[v].id;
+        else{
+            int m = (l+r)/2;
+            int res = (x<=m) ? qry(seg[v].l, l, m, x) : qry(seg[v].r, m+1, r, x);
+            if(cmp(res, seg[v].id, x))res = seg[v].id;
+            return res;
+        }
+    }
+
+    void ins1(int a, int b, int id){ // insert line based on slope
+        li[id] = {a,b};
+        add(rt, L, R, L, R, id);
+    }
+
+    void ins2(int x0, int y0, int x1, int y1, int id){ // insert line based on 2 coor
+        if(x0 > x1)swap(x0,x1), swap(y0, y1);
+        if(x0 != x1){
+            double s = (double)(y1-y0)/(x1-x0);
+            li[id] = {s, y1-s*x1};
+        }else li[id] = {0, max(y0,y1)};
+        add(rt, L, R, x0, x1, id);
     }
 }lc;
 
-int rt;
+const int M = 39989;
+const int M2 = 1e9;
 
 int main(){
-    int n, m;
-    cin >> n >> m;
+    int n;
+    cin >> n;
 
-    vector<ll>b(n), c(m);
-    for(auto &e : b)cin >> e;
-    for(auto &e : c)cin >> e;
-    sort(b.begin(), b.end(), greater<ll>());
-    for(int i=0; i<n; i++)lc.add(rt, 0, lc.inf, {-(i+1), -((i+1)*b[i])});
-    for(int i=0; i<m; i++)cout << -lc.qry(rt, 0, lc.inf, c[i]) << " ";
+    int lst = 0;
+
+    auto f = [&](int v, int m){
+        return (v+lst-1)%m+1;
+    };
+
+    while(n--){
+        int op;
+        cin >> op;
+
+        if(!op){
+            int k;
+            cin >> k;
+            k = f(k, M);    
+            lst = lc.qry(lc.rt, lc.L, lc.R, k);
+            cout << lst << "\n";
+        }else{
+            int x0, x1, y0, y1;
+            cin >> x0 >> y0 >> x1 >> y1;
+            x0 = f(x0, M), x1 = f(x1, M), y0 = f(y0, M2), y1 = f(y1, M2);
+            lc.cnt++;
+            lc.ins2(x0,y0,x1,y1,lc.cnt);
+        }
+    }
 }
