@@ -33,7 +33,7 @@ struct linearBasis{
 
     int queryMax(){
         int res = 0;
-        for(int i=LG-1; i>=0; i--)if((res^d[i])>res)res ^= d[i];
+        for(int i=LG-1; i>=0; i--)if(res^d[i]>res)res ^= d[i];
         return res;
     }
 

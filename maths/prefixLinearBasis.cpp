@@ -1,6 +1,8 @@
 #include <bits/stdc++.h>
 using namespace std;
 
+#define int long long 
+
 const int N = 2e5+5;
 const int LG = 60;
 
@@ -25,7 +27,7 @@ struct linearBasis{
                 }
                 if(pos[i] < p){
                     swap(pos[i], p);
-                    swap(d[i] < x);
+                    swap(d[i], x);
                 }
                 x ^= d[i];
             }
@@ -33,13 +35,20 @@ struct linearBasis{
         return 0;
     }
 
-    int querykth(int k){
-        memcpy(dc,d,sizeof d);
+	void rebuild(){
+		memcpy(dc,d,sizeof d);
         for(int i=LG-1; i>=0; i--){
+			if(!dc[i])continue;
             for(int j=i-1; j>=0; j--){
                 if(dc[i] & (1ll<<j))dc[i] ^= dc[j];
             }
         }
+	}
+
+    int querykth(int k){
+        rebuild();
+        vector<int>vec;
+        for(int i=0; i<LG; i++)if(dc[i])vec.push_back(dc[i]);
         int sz = vec.size();
         if(k >= (1ll<<sz))return -1;
         int res = 0;
@@ -48,8 +57,9 @@ struct linearBasis{
     }
 };
 
+
 struct prefixLinearBasis{
-    linearBasis lbs;
+    vector<linearBasis> lbs;
     prefixLinearBasis() {lbs.emplace_back();}
     
     void add(int x){
@@ -62,7 +72,7 @@ struct prefixLinearBasis{
         int res = 0;
         for(int i=LG-1; i>=0; i--){
             if(lbs[r].pos[i]<l)continue;
-            if((res^lbs[r].d[i])>res)res ^= lbs[r].pos[i];
+            if((res^lbs[r].d[i])>res)res ^= lbs[r].d[i];
         }
         return res;
     }
@@ -74,4 +84,4 @@ struct prefixLinearBasis{
         }
         return 0;
     }
-};
+}plb;
