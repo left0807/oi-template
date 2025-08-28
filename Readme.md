@@ -1,5 +1,5 @@
 # OI template #
-
+Thank you tkt for the oi template :))
 ## Missing Templates ## 
 ### Graph ###
 1. Central decomposition
