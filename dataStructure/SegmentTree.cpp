@@ -1,89 +1,106 @@
-#include <bits/stdc++.h>
-using namespace std;
+template <class Info, class Tag> class LazySegtree {
+  private:
+	const int n;
+	vector<Info> tree;
+	vector<Tag> lazy;
 
-const int N = 2e5+5;
+	/** builds the segtree values in O(N) time */
+	void build(int v, int l, int r, const vector<Info> &a) {
+		if (l == r) {
+			tree[v] = a[l];
+		} else {
+			int m = (l + r) / 2;
+			build(2 * v, l, m, a);
+			build(2 * v + 1, m + 1, r, a);
+			tree[v] = tree[2 * v] + tree[2 * v + 1];
+		}
+	}
 
-struct Node{ // value stored in each node 
-    int cnt, mn, lazy;
+	/** applies update x to lazy[v] and tree[v] */
+	void apply(int v, int l, int r, const Tag &x) {
+		tree[v].apply(x, l, r);
+		lazy[v].apply(x);
+	}
+
+	/** pushes lazy updates down to the children of v */
+	void push_down(int v, int l, int r) {
+		int m = (l + r) / 2;
+		apply(2 * v, l, m, lazy[v]);
+		apply(2 * v + 1, m + 1, r, lazy[v]);
+		lazy[v] = Tag();
+	}
+
+	void range_update(int v, int l, int r, int ql, int qr, const Tag &x) {
+		if (qr < l || ql > r) { return; }
+		if (ql <= l && r <= qr) {
+			apply(v, l, r, x);
+		} else {
+			push_down(v, l, r);
+			int m = (l + r) / 2;
+			range_update(2 * v, l, m, ql, qr, x);
+			range_update(2 * v + 1, m + 1, r, ql, qr, x);
+			tree[v] = tree[2 * v] + tree[2 * v + 1];
+		}
+	}
+
+	Info range_query(int v, int l, int r, int ql, int qr) {
+		if (qr < l || ql > r) { return Info(); }
+		if (l >= ql && r <= qr) { return tree[v]; }
+		push_down(v, l, r);
+		int m = (l + r) / 2;
+		return range_query(2 * v, l, m, ql, qr) +
+		       range_query(2 * v + 1, m + 1, r, ql, qr);
+	}
+
+  public:
+	LazySegtree() {}
+
+	LazySegtree(int n) : n(n) {
+		tree.assign(4 << __lg(n), Info());
+		lazy.assign(4 << __lg(n), Tag());
+	}
+
+	LazySegtree(const vector<Info> &a) : n(a.size()) {
+		tree.assign(4 << __lg(n), Info());
+		lazy.assign(4 << __lg(n), Tag());
+		build(1, 0, n - 1, a);
+	}
+
+	/** updates [ql, qr] with the arbitrary update chosen */
+	void range_update(int ql, int qr, const Tag &x) {
+		range_update(1, 0, n - 1, ql, qr, x);
+	}
+
+	/** @return result of range query on [ql, qr] */
+	Info range_query(int ql, int qr) { return range_query(1, 0, n - 1, ql, qr); }
 };
 
-vector<Node>seg(4*N);
+enum QueryType { ADD, SET, NONE };
 
-void merge(int v){ // combine 2 child 
-    int c1 = seg[v*2].cnt, c2 = seg[v*2+1].cnt;
-    int m1 = seg[v*2].mn, m2 = seg[v*2+1].mn;
-    if(m1==m2)seg[v].cnt = c1+c2, seg[v].mn = m1;
-    else if(m1 < m2)seg[v].cnt = c1, seg[v].mn = m1;
-    else seg[v].cnt = c2, seg[v].mn = m2;
-}
+struct Tag {
+	QueryType type = NONE;
+	int val = 0;
+	void apply(const Tag &t) {
+		if (t.type == ADD) {
+			val += t.val;
+			if (type != SET) { type = ADD; }
+		} else if (t.type == SET) {
+			type = SET;
+			val = t.val;
+		}
+	}
+};
 
-void apply(int v, int val){ // update value 
-    seg[v].mn += val;
-    seg[v].lazy += val;
-}
+struct Info {
+	int sum = 0;
+	void apply(const Tag &t, int l, int r) {
+		if (t.type == SET) {
+			sum = t.val * (r - l + 1);
+		} else if (t.type == ADD) {
+			sum += t.val * (r - l + 1);
+		}
+	}
+};
 
-void push(int v, int l, int r){ // lazy propagation update child 
-    if(seg[v].lazy!=0){
-        int m = (l+r)/2;
-        apply(v*2, seg[v].lazy);
-        apply(v*2+1, seg[v].lazy);
-        seg[v].lazy = 0;
-    }
-}
-
-void build(int v, int l, int r){ // Initialize tree 
-    if(l==r){
-        seg[v] = {1,0,0};
-    }else{
-        int m = (l+r)/2;
-        build(v*2, l, m);
-        build(v*2+1, m+1, r);
-        seg[v].lazy = 0;
-        merge(v);
-    }
-}
-
-void update(int v, int l, int r, int ql, int qr, int val){ // Update range
-    if(ql > r || qr < l)return ;
-    if(ql <= l && r <= qr){
-        apply(v,val);
-        return ;
-    }
-    push(v,l,r);
-    int m = (l+r)/2;
-    update(v*2,l,m,ql,qr,val);
-    update(v*2+1,m+1,r,ql,qr,val);
-    merge(v);
-}
-
-void add(int a, int b, int n, int val){  
-    if(a!=1)update(1,1,n,1,a-1, val); // 1->a 
-    update(1,1,n,b,n,val); // b->n
-    update(1,1,n,a,b-1,-val); // a->b
-}
-
-void solve(){
-    int n, m, a, b;
-    cin >> n >> m;
-    build(1,1,n);
-    vector<int>st[n+1], ed[n+1];
-    for(int i=0; i<m; i++){
-        cin >> a >> b;
-        st[a].push_back(b);
-        ed[b].push_back(a);
-        update(1,1,n,a,b-1,1);
-    }
-    int mn = n;
-    for(int i=1; i<=n; i++){
-        for(int b : st[i])add(i,b,n,1);
-        for(int a : ed[i])add(a,i,n,-1);
-        if(seg[1].mn == 0)mn = min(mn, n-seg[1].cnt);
-    }
-    cout << mn << "\n";
-}
-
-int main(){
-    int t;
-    cin >> t;
-    while(t--)solve();
-}
+/** @return result of joining nodes a and b together */
+Info operator+(const Info &a, const Info &b) { return {a.sum + b.sum}; }

@@ -2,6 +2,7 @@
 using namespace std;
 
 const int N = 2e5+5;
+const int MOD = 998244353;
 
 struct AhoCorasick{
     struct node{
@@ -10,6 +11,7 @@ struct AhoCorasick{
         int deg;
         int idx;
         int ans = 0;
+        int lst = 0;
 
         void init(){
             memset(son, 0, sizeof son); 
@@ -25,7 +27,7 @@ struct AhoCorasick{
         tr[0].init();
     }
 
-    void insert(string s, int& idx){
+    void insert(string s, int& idx, int id){
         int u = 0;
         for(char c : s){
             int &son = tr[u].son[c-'a'];
@@ -33,6 +35,7 @@ struct AhoCorasick{
             u = son;
         }
         if(!tr[u].idx)tr[u].idx = ++pidx;
+        tr[u].lst |= 1 << id;
         idx = tr[u].idx;
     }
 
@@ -76,24 +79,42 @@ struct AhoCorasick{
     }
 }AC;
 
+int dp[2][1<<8][N];
+
 int main(){
-    int n;
-    cin >> n;
+    int n, l;
+    cin >> n >> l;
 
     vector<int>idx(n);
-
     AC.init();
     for(int i=0; i<n; i++){
         string s;
         cin >> s;
-        AC.insert(s,idx[i]);
+        AC.insert(s,idx[i], i);
         AC.ans[idx[i]] = 0; 
     }
     AC.build();
-    string t;
-    cin >> t;
-    AC.query(t);
-    AC.topu();
-    for(int i=0; i<n; i++)cout << AC.ans[idx[i]] << "\n";
 
+    dp[1][0][0] = 1;
+    for(int i = 0; i < l; i++){
+        for(int bit = 0; bit < (1<<n); bit++){
+            for(int v = 0; v < AC.tot; v++){
+                for(int k = 0; k < 26; k++){
+                    int to = AC.tr[v].son[k];
+                    int nbit = bit | AC.tr[to].lst;
+                    dp[i&1][nbit][to] = (dp[i&1^1][bit][v] + dp[i&1][nbit][to]) % MOD;
+                }
+            }
+        }
+
+        for(int bit = 0; bit < (1<<n); bit++){
+            for(int v = 0; v <= AC.tot; v++){
+                dp[i&1^1][bit][v] = 0;
+            }
+        }
+    }
+
+    int ans = 0;
+    for(int i = 0; i <= AC.tot; i++) ans = (ans + dp[l&1^1][(1<<n)-1][i]);
+    cout << ans << '\n';
 }
