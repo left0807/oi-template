@@ -26,3 +26,22 @@ vector<int> manacher(string s) {
     auto res = manacher_odd(t + "#");
     return vector<int>(begin(res) + 1, end(res) - 1);
 }
+
+
+int main(){
+    string s;
+    cin >> s;
+    auto v = manacher(s);
+    for(auto& x : s) x--;
+
+    int q;
+    cin >> q;
+    while(q--){ 
+        int l, r;
+        cin >> l >> r;
+        l--, r--;
+
+        if(v[l + r] >= (r - l + 1)) cout << "Palindrome\n";
+        else cout << "No\n";
+    }
+}
