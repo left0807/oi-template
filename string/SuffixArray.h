@@ -67,3 +67,47 @@ public:
         return h;
     }
 };
+    // Note:
+    // height[i] = longest common prefix of suffix(sa[i-1]) suffix(sa[i])
+    // longest common prefix(sa[i], sa[j]) = min(height[i+1]... height[j])
+
+    // Problem 1
+    // find the longest repeated (occurs at least twice) substring (can overlap)
+    // max value of (height)
+
+    // Problem 2
+    // find the longest repeated substring, cannot overlap
+    // binary search on answer k
+    // Divide height into blocks [0...i1-1] [i1...i2-1] ...
+    // height[i1] < k
+    // if(max(sa[0...i]) - min(sa[0...i])) for any bock i >= k
+    // => longest common prefix at least k and separate at least k apart
+
+    // Problem 3
+    // Find longest substring that repeated at least k times
+    // same approac -> divide
+    // Then find if exist block with at least k strings
+
+    // Problem 4
+    // ***每個字串都是某個後綴的前綴***
+    // every suffix(sa[k]) contribute n - sa[k] no. of prefix
+    // but height[k] of them are repeated
+    // no. of distinct substring = n (n+1) / 2 - sum of height
+
+    // Problem 5
+    // Longest palindrome substring
+    // find longets repeated substring of s + '# + rev(s)
+
+    // Problem 6
+    // consecutive repeated string (e.g. abababa) ab repeated R = 3 times, R is max
+    // for each k from 1 to n, see if n%k == 0 and RMQ(height[rank[1]]...height[rank[k+1]]) == n - k
+ 
+    // Problem 7
+    // Find the substring with most consecutive repated string R = sqrtababababeipi => S = abababab is the answer
+    // Consider repeated string of length L
+    // if S consist of at least 2 L, then it must contain 2 of the R[0], R[L], R[2*L] ...
+    // so just consider r[L*i] and r[L*(i+1)] can extend to where, let the length be K, ans = max(K/L + 1)
+
+    // Problem 8
+    // longest common substring of A+B
+    // find Problem 1 of (A + '#' + B), but the suffix are orriginally in different string
