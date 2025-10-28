@@ -1,72 +1,33 @@
+#include <bits/stdc++.h>
+#define all(a) (a).begin(), (a).end()
+#define sz(a) (long long) (a).size()
+using namespace std;
 
-template<typename T>
-class SuffixArray{
-public:
-
-    vector<T> s;
-    vector<int> sa, rk, oldrk;
-    int n;
-
-    SuffixArray(){}
-    SuffixArray(vector<T> _s){
-        n = _s.size();
-        s = _s;
-        s.resize(2*n);
-        sa.assign(2*n, -1), rk.assign(2*n, -1), oldrk.assign(2*n, -1);
-        fast_sort();
-    }
-
-    void fast_sort(){
-        vector<int> cnt(n), id(n);
-
-        for(int i = 0; i < n; i++) sa[i] = i, oldrk[i] = s[i];
-        sort(sa.begin(), sa.begin()+n, [&](int x, int y){ return oldrk[x] < oldrk[y]; });
-        
-        rk[sa[0]] = 0;
-        for(int i = 0; i + 1 < n; i++){
-            if(oldrk[sa[i]] == oldrk[sa[i+1]]) rk[sa[i+1]] = rk[sa[i]];
-            else rk[sa[i+1]] = rk[sa[i]] + 1;
-        }
-
-        int m = rk[sa[n-1]], p;
-
-        for(int w = 1; w < n; w *= 2, m = p){
-            int cur = 0;
-            for(int i = n - w; i < n; i++) id[cur++] = i;
-            for(int i = 0; i < n; i++) if(sa[i] >= w){
-                id[cur++] = sa[i] - w;
-            }
-
-            for(int i = 0; i < n; i++) cnt[i] = 0;
-            for(int i = 0; i < n; i++) cnt[rk[i]]++;
-            for(int i = 1; i <= m; i++) cnt[i] += cnt[i-1];
-            for(int i = n-1; i >= 0; i--) sa[--cnt[rk[id[i]]]] = id[i];
-
-            for(int i = 0; i < n; i++) oldrk[i] = rk[i];
-            rk[sa[0]] = p = 0;
-            for(int i = 0; i+1 < n; i++){
-                if(oldrk[sa[i]] == oldrk[sa[i+1]] && oldrk[sa[i] + w] == oldrk[sa[i+1] + w]){
-                    rk[sa[i+1]] = p;
-                } else{
-                    rk[sa[i+1]] = ++p;
-                }
-            }
-
-            if(p == n) break;
-        }
-    }
-
-    vector<int> get_height(){
-        vector<int> h(n, 0);
-        for(int i = 0, k = 0; i < n; i++){
-            if(rk[i] == 0) continue;
-            if(k) k--;
-            while(s[i+k] ==  s[sa[rk[i] - 1] + k]) k++;
-            h[rk[i]] = k;
-        }
-        return h;
-    }
+struct SuffixArray{
+	vector<int> sa, lcp, rank;
+	SuffixArray(string& s, int lim = 256){
+		int n = sz(s) + 1, k = 0, a, b;
+		vector<int> x(all(s) + 1), y(n), ws(max(n, lim));
+		rank = vector<int>(n);
+		sa = lcp = y, iota(all(sa), 0);
+		for (int j = 0, p = 0; p < n; j = max(1LL, j * 2LL), lim = p) {
+			p = j, iota(all(y), n - j);
+			for(int i = 0; i <  n; i++) if(sa[i] >= j) y[p++] = sa[i] - j;
+			fill(all(ws), 0);
+			for(int i = 0; i <  n; i++) ws[x[i]]++;
+			for(int i = 1; i < lim; i++) ws[i] += ws[i - 1];
+			for(int i = n; i--;) sa[--ws[x[y[i]]]] = y[i];
+			swap(x, y), p = 1, x[sa[0]] = 0;
+			for(int i = 1; i < n; i++) a = sa[i - 1], b = sa[i], x[b]
+				= (y[a] == y[b] && y[a + j] == y[b + j]) ? p - 1 : p++;
+			for(int i = 1; i < n; i++) rank[sa[i]] = i;
+			for(int i = 0, j; i < n - 1; lcp[rank[i++]] = k)
+				for (k && k--, j = sa[rank[i] - 1];
+					i + k < s.size() && j + k < s.size() && s[i + k] == s[j + k]; k++);
+		}
+	}
 };
+    // height == lcp
     // Note:
     // height[i] = longest common prefix of suffix(sa[i-1]) suffix(sa[i])
     // longest common prefix(sa[i], sa[j]) = min(height[i+1]... height[j])
