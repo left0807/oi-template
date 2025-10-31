@@ -2,11 +2,15 @@
 using namespace std;
 const int N = 1e6 + 10;
 
-int BIT[N];
+int BIT[N], tag[N], Tag = 0;
+void reset(){ ++Tag; }
+
 void add(int x, int v){
+    // if tag[i] != Tag: tag[i] = Tag, BIT[i] = 0
     for(int i = x; i < N; i += i&-i) BIT[i] += v;
 }
 int qry(int x){
+    // if tag[i] != Tag: continue
     int res = 0; for(int i = x; i > 0; i -= i&-i) res += BIT[i]; return res;
 }
 
