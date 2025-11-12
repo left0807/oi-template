@@ -87,7 +87,7 @@ int32_t main()
         cin >> tt;
         for (int i = 1; i <= tt; i++)
         {
-                printf("Case #%d: %d\n", i, solve());
+                solve();
         }
 }
 
