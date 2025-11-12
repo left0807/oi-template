@@ -3,9 +3,9 @@ Thank you tkt for the oi template :))
 
 ## cpp_to_pdf.sh
 ### How to use?
-```
+```bash
 chmod +x ./cpp_to_pdf.sh
-sudo pacman -S enscript ghostscript highlight (for Arch, use your own package manager)
+sudo pacman -S enscript ghostscript highlight #for Arch, use your own package manager
 ./cpp_to_pdf.sh ABSOLUTE_PATH_TO_TEMPLATE OUTPUT.pdf
 ```
 
