@@ -31,6 +31,7 @@ vector<int> manacher(string s) {
 int main(){
     string s;
     cin >> s;
+
     auto v = manacher(s);
     for(auto& x : s) x--;
 

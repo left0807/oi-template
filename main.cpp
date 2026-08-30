@@ -67,29 +67,59 @@ using namespace Debug;
 
 mt19937_64 rng(chrono::steady_clock::time_point::clock().now().time_since_epoch().count());
 
-const int N = 5e5 + 10;
-const int INF = 1e18;
+const int N = 1e6 + 10;
+const int INF = 1LL<<60;
 const int MOD = 998244353;
-const int LOG = 20;
+const int LOG = 31;
+const double pi = acos(-1);
 
 typedef __int128_t ll;
 
-int solve()
+
+int qpow(int x, int y)
 {
+        int res = 1;
+        x = x % MOD;
+        while (y > 0)
+        {
+                if (y & 1)
+                        res = (res * x) % MOD;
+                y = y >> 1;
+                x = (x * x) % MOD;
+        }
+        return res;
+}
+
+int inv(int x)
+{
+        return qpow(x, MOD - 2);
+}
+
+vector<int> fact{1}, invfact{1};
+
+int C(int n, int r){
+   if(n < r || r < 0) return 0;
+    for(int i = fact.size(); i <= n; i++){
+        fact.push_back(fact.back() * i % MOD);
+        invfact.push_back(inv(fact.back()));
+    }
+    return ((fact[n]*invfact[r])%MOD*invfact[n-r])%MOD;
+}
+
+void solve(){
+        
 }
 
 int32_t main()
 {
         ios::sync_with_stdio(false);
         cin.tie(0);
-
-        int tt;
+ 
+        int tt = 1;
         cin >> tt;
+
         for (int i = 1; i <= tt; i++)
         {
                 solve();
         }
 }
-
-// 0 2 1 -> 1 1 0 0 0
-// 2 1 0 -> 0 0 0 0 2

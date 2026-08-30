@@ -79,25 +79,27 @@ enum QueryType { ADD, SET, NONE };
 
 struct Tag {
 	QueryType type = NONE;
-	int val = 0;
+	int add = 0;      
+	
 	void apply(const Tag &t) {
-		if (t.type == ADD) {
-			val += t.val;
-			if (type != SET) { type = ADD; }
-		} else if (t.type == SET) {
+		if (t.type == SET) {
+			add = t.add;
 			type = SET;
-			val = t.val;
-		}
+		} else if (t.type == ADD) {
+			add += t.add;
+			if (type != SET) { type = ADD; }
+		} 
 	}
 };
 
 struct Info {
 	int sum = 0;
 	void apply(const Tag &t, int l, int r) {
+		long long len = r - l + 1;
 		if (t.type == SET) {
-			sum = t.val * (r - l + 1);
+			sum = (long long)t.add * len;
 		} else if (t.type == ADD) {
-			sum += t.val * (r - l + 1);
+			sum += (long long)t.add * len;
 		}
 	}
 };

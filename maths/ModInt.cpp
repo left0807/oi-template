@@ -1,3 +1,6 @@
+#include <bits/stdc++.h>
+using namespace std;
+
 template <int P>
 class mod_int {
   using Z = mod_int;
@@ -65,3 +68,7 @@ public:
 const int P = 998244353;
 using Z = mod_int<P>;
 
+int main(){
+	ios::sync_with_stdio(false);
+	cin.tie(0);
+}
